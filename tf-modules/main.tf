@@ -99,7 +99,7 @@ resource "aws_network_interface" "infra-op-ni" {
 # This creates the EC2 instance
 resource "aws_instance" "infra_op_ec2" {
   count = 3
-  ami = "${var.ami_id}""
+  ami = "${var.ami_id}"
   instance_type = "t2.micro"
   associate_public_ip_address = true
   vpc_security_group_ids = "${aws_security_group.infra_op_sg.id}"
