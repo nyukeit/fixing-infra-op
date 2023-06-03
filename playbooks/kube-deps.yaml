@@ -1,273 +1,65 @@
 - hosts: all
-
   become: yes
-
+  gather_facts: false
+  
   tasks:
-
-    - fail:
-
-       msg: "OS should be Ubuntu 22.04, not {{ ansible_distribution }} {{ ansible_distribution_version }}"
-
-      when: ansible_distribution != 'Ubuntu' or ansible_distribution_version != '22.04'
-
-
-
-    - name: update APT packages
-
+    - name: Install dependencies
       apt:
-
-        update_cache: yes
-
-
-
-    - name: disable SWAP (Kubeadm requirement)
-
-      shell: |
-
-        swapoff -a
-
-
-
-    - name: disable SWAP in fstab (Kubeadm requirement)
-
-      replace:
-
-        path: /etc/fstab
-
-        regexp: '^([^#].*?\sswap\s+sw\s+.*)$'
-
-        replace: '# \1'
-
-
-
-    - name: create an empty file for the Containerd module
-
-      copy:
-
-        content: ""
-
-        dest: /etc/modules-load.d/containerd.conf
-
-        force: no
-
-
-
-    - name: configure modules for Containerd
-
-      blockinfile:
-
-        path: /etc/modules-load.d/containerd.conf
-
-        block: |
-
-             overlay
-
-             br_netfilter
-
-
-
-    - name: create an empty file for Kubernetes sysctl params
-
-      copy:
-
-        content: ""
-
-        dest: /etc/sysctl.d/99-kubernetes-cri.conf
-
-        force: no
-
-
-
-    - name: configure sysctl params for Kubernetes
-
-      lineinfile:
-
-        path: /etc/sysctl.d/99-kubernetes-cri.conf
-
-        line: "{{ item }}"
-
-      with_items:
-
-        - 'net.bridge.bridge-nf-call-iptables  = 1'
-
-        - 'net.ipv4.ip_forward                 = 1'
-
-        - 'net.bridge.bridge-nf-call-ip6tables = 1'
-
-
-
-    - name: apply sysctl params without reboot
-
-      command: sysctl --system
-
-
-
-    - name: install APT Transport HTTPS
-
-      apt:
-
-        name: apt-transport-https
-
+        name: {{ item }}
         state: present
-
-
-
-    - name: add Docker apt-key
-
-      apt_key:
-
-        url: https://download.docker.com/linux/ubuntu/gpg
-
-        state: present
-
-
-
-    - name: add Dockers APT repository
-
-      apt_repository:
-
-        repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
-
-        filename: "docker-{{ ansible_distribution_release }}"
-
-        
-
-    - name: install Docker
-
-      apt:
-
-        name: "{{ item }}"
-
-        state: latest
-
+        update_cache: yes  
       loop:
-
-        - docker-ce
-
-        - docker-ce-cli
-
-        - containerd.io
-
-        - docker-buildx-plugin
-
-
-
-    - name: add Kubernetes apt-key
-
-      apt_key:
-
-        url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
-
-        state: present
-
-
-
-    - name: add Kubernetes APT repository
-
-      apt_repository:
-
-        repo: "deb https://apt.kubernetes.io/ kubernetes-xenial main"
-
-        state: present
-
-        filename: 'kubernetes'
-
+        - apt-transport-https
+        - ca-certificates
+        - curl
+        - gnupg-agent
+        - software-properties-common
         
-
-    - name: install Kubelet
-
-      apt:
-
-        name: kubelet=1.27.*
-
-        state: present
-
-        update_cache: true
-
-
-
-    - name: install Kubeadm
-
-      apt:
-
-        name: kubeadm=1.27.*
-
-        state: present
-
-
-
-    - name: enable the Kubelet service, and enable it persistently
-
-      service:
-
-        name: kubelet
-
-        enabled: yes
-
-
-
-    - name: load br_netfilter kernel module
-
-      modprobe:
-
-        name: br_netfilter
-
-        state: present
-
-
-
-    - name: set bridge-nf-call-iptables
-
-      sysctl:
-
-        name: net.bridge.bridge-nf-call-iptables
-
-        value: 1
-
-
-
-    - name: set ip_forward
-
-      sysctl:
-
-        name: net.ipv4.ip_forward
-
-        value: 1
-
-
-
-    - name: check Kubelet args in Kubelet config
-
-      shell: grep "^Environment=\"KUBELET_EXTRA_ARGS=" /etc/systemd/system/kubelet.service.d/10-kubeadm.conf || true
-
-      register: check_args
-
-
-
-    - name: add runtime args in Kubelet config
-
-      lineinfile:
-
-        dest: "/etc/systemd/system/kubelet.service.d/10-kubeadm.conf"
-
-        line: "Environment=\"KUBELET_EXTRA_ARGS= --runtime-cgroups=/system.slice/containerd.service --container-runtime-endpoint=unix:///run/containerd/containerd>        insertafter: '\[Service\]'
-
-      when: check_args.stdout == ""
-
-
-
-- hosts: master
-
-  become: yes
-
-  tasks:
-
-    - name: install Kubectl
-
-      apt:
-
-        name: kubectl=1.27.*
-
-        state: present
-
-        force: yes # allow downgrades
+    - name: Disable Swap
+      shell: |
+        swapoff -a
+        
+    - name: disable SWAP in fstab
+      replace:
+        path: /etc/fstab
+        regexp: '^([^#].*?\sswap\s+sw\s+.*)$'
+        replace: '# \1'
+        
+    - name: Download Docker install script
+      ansible.builtin.get_url:
+        url: https://raw.githubusercontent.com/nyukeit/fixing-infra-op/main/install/installDocker.sh
+        dest: /tmp
+        mode: '0755'
+        
+    - name: Install Docker from script
+      become: yes
+      ansible.builtin.shell: bash /tmp/installDocker.sh
+      
+    - name: Restart Docker service
+      become: yes
+      ansible.builtin.systemd:
+        state: restarted
+        name: docker.service
+        
+    - name: Download CRI-Docker
+      ansible.builtin.get_url:
+        url: https://raw.githubusercontent.com/nyukeit/fixing-infra-op/main/install/installCRIDocker.sh
+        dest: /tmp
+        mode: '0755'
+        
+    - name: Install CRI-Docker
+      ansible.builtin.shell: bash /tmp/installCRIDocker.sh
+      
+    - name: Restart CRI-Docker service
+      ansible.builtin.systemd:
+        state: restarted
+        name: cri-docker.service
+        
+    - name: Download kubeadm, kubelet and kubectl install script
+      ansible.builtin.get_url:
+        url: https://raw.githubusercontent.com/nyukeit/fixing-infra-op/main/install/installK8S.sh
+        dest: /tmp
+        mode: '0755'
+        
+    - name: Install kubeadm, kubelet and kubectl
+      ansible.builtin.shell: bash /tmp/installK8S.sh

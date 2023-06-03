@@ -1,61 +1,32 @@
 - hosts: master
-
   become: yes
-
   tasks:
-
-    - name: create an empty file for Kubeadm configuring
-
+    - name: Create empty file for kubeadm config
       copy:
-
         content: ""
-
         dest: /etc/kubernetes/kubeadm-config.yaml
-
         force: no
-
-
-
-    - name: initialize the cluster (this could take some time)
-
-      shell: kubeadm init --apiserver-advertise-address=10.1.0.10 --pod-network-cidr=192.168.0.0/16 --cri-socket=unix:///var/run/cri-dockerd.sock --ignore-preflig>
-
-
-
-    - name: create .kube directory
-
+        
+    - name: Initialize the cluster (be patient!)
+      shell: |
+        kubeadm init --apiserver-advertise-address={{ hostvars['master'] }} --pod-network-cidr=192.168.0.0/16 --cri-socket=unix:///var/run/cri-dockerd.sock --ignore-preflight-errors=all
+    
+    - name: Create .kube directory
       become: yes
-
-      become_user: vagrant
-
+      become_user: ubuntu
       file:
-
         path: $HOME/.kube
-
         state: directory
-
         mode: 0755
-
-
-
-    - name: copy admin.conf to users kube config
-
+        
+    - name: Copy admin.conf to user kube config
       copy:
-
         src: /etc/kubernetes/admin.conf
-
-        dest: /home/vagrant/.kube/config
-
+        dest: /home/ubuntu/.kube/config
         remote_src: yes
-
-        owner: vagrant
-
-
-
-    - name: install Pod network
-
+        owner: ubuntu
+        
+    - name: Install Pod Network
       become: yes
-
-      become_user: vagrant
-
+      become_user: ubuntu
       shell: kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.0/manifests/calico.yaml
