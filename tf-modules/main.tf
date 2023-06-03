@@ -5,8 +5,8 @@ locals {
 
 # Network Policy for our VPC using Security Group
 
-resource "aws_security_group" "infra_op_sg" {
-  name= "infra_op_sg"
+resource "aws_security_group" "infra-op-sg" {
+  name= "infra-op-sg"
   vpc_id = "${var.vpc_id}"
   
   ingress {
@@ -90,6 +90,12 @@ resource "aws_security_group" "infra_op_sg" {
 # Create a Network Interface to associate our instances to our specific subnet
 resource "aws_network_interface" "infra-op-ni" {
   subnet_id = "${var.subnet_id}"
+  security_groups = "${aws_security_group.infra-op-sg}"
+  
+  attachment {
+    instance = "${aws_instance.infra-op-ec2[*]}"
+    device_index = 1
+  }
   
   tags = {
     Name = "infra_op_network_interface"
@@ -97,12 +103,12 @@ resource "aws_network_interface" "infra-op-ni" {
 }
 
 # This creates the EC2 instance
-resource "aws_instance" "infra_op_ec2" {
+resource "aws_instance" "infra-op-ec2" {
   count = 3
   ami = "${var.ami_id}"
   instance_type = "t2.micro"
   associate_public_ip_address = true
-  vpc_security_group_ids = "${aws_security_group.infra_op_sg.id}"
+  vpc_security_group_ids = "${aws_security_group.infra-op-sg.id}"
   key_name = "${var.key_name}"
   
   network_interface {
@@ -111,7 +117,7 @@ resource "aws_instance" "infra_op_ec2" {
 }
 
 # Provision an Elastic IP
-resource "aws_eip" "infra_op_eip" {
+resource "aws_eip" "infra-op-eip" {
   vpc = true
   network_interface = "${aws_network_interface.infra-op-ni}"
 }
@@ -123,7 +129,7 @@ resource "aws_lb" "infra_op_lb" {
 
   subnet_mapping {
     subnet_id     = "${var.subnet_id}"
-    allocation_id = "${aws_eip.infra_op_eip.id}"
+    allocation_id = "${aws_eip.infra-op-eip.id}"
   }
 }
 
