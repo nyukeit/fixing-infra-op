@@ -234,10 +234,6 @@ resource "aws_instance" "infra-op-ec2" {
   associate_public_ip_address = true
   vpc_security_group_ids = "${aws_security_group.infra-op-sg.id}"
   key_name = "${var.key_name}"
-  
-  network_interface {
-    network_interface_id = "${aws_network_interface.infra-op-ni}"
-  }
 }
 
 # Provision an Elastic IP
