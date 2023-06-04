@@ -97,7 +97,6 @@ resource "aws_instance" "infra-op-ec2" {
   associate_public_ip_address = true
   vpc_security_group_ids = [aws_security_group.infra-op-sg.id]
   key_name = "${var.key_name}"
-  subnet_id = "${var.subnet_id}"
 
   connection {
     type = "ssh"
@@ -114,20 +113,12 @@ resource "aws_instance" "infra-op-ec2" {
   }
 }
 
-# Provision an Elastic IP
-resource "aws_eip" "infra-op-eip" {
-  vpc = true
-}
-
-# Provision an Elastic Load Balancer
+# Provision an Application Load Balancer
 resource "aws_lb" "infra_op_lb" {
-  name               = "infra-op-lb"
-  load_balancer_type = "network"
-
-  subnet_mapping {
-    subnet_id     = "${var.subnet_id}"
-    allocation_id = "${aws_eip.infra-op-eip.id}"
-  }
+  name = "infra-op-lb"
+  internal = false
+  security_groups = "${aws_security_group.infra-op-sg.id}"
+  load_balancer_type = "application"
 }
 
 # Installing Docker & Kubernetes on our Instances
