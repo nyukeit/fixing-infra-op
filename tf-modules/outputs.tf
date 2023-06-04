@@ -2,6 +2,6 @@
 
 output "instance_ips" {
 
-  value = aws_instance.infra_op_ec2[*].public_ip
+  value = aws_instance.infra-op-ec2[*].public_ip
 
 }
