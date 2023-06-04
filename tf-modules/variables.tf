@@ -1,23 +1,29 @@
 variable "ami_id" {
-    default = "ami-08fdec01f5df9998f" 
+  default = "ami-08fdec01f5df9998f" 
 }
+
 variable "vpc_id"{
-    default="vpc-000c470bfeccdec26"
+  default= "vpc-0628a7cccdfec986d"
 }
+
 variable "key_name" {
-    default = "infra_op"
+  default = "infra_op"
 }
+
 variable "aws_access_key" {
-    default = "ASIAZWKLZ6WUYO5ATKMD"
+  default = "ASIAZWKLZ6WUXXLT5ZOP"
 }
+
 variable "aws_secret_key" {
-default = "nxfz+qI3wChxpbLOmGKkqju7qkPVwTANwhmHiG6p"
+  default = "4prAIytje5wi2epvwVn/reM2PBFYiHkQchcbEQ6b"
 }
+
 variable "aws_token" {
-  default = "FwoGZXIvYXdzEMX//////////wEaDLRqSQAEXms0rgSsHSK0AWZCwySYRGHIkGR2Day7ZKKEJuyCbxlbBoV4lv5uONvJa7t7j+SbqZ/fzFYrM0vWhRKGo6iSQRpIx21hXKOrLPF9sGEdVJ/ZkuYTnE80IPzYLxPiYx5pOlBgjAA3iuerNW9fK7FHCxEAT8ctaSVloMdkHMROfxOEEd36l0BKJvddzFBVidFvzRmfKuDhiji9shl2x9UMIFUQUHyilsBo0p2mK9+AJENVkq7UMw+ozLxyDwt2pSi01eyjBjIt9HT13Dw7QRLGkQxBWoMgm5jhkjGyqIAl1A8mjr/sgnqt/IoXCphkNB5m6dYC"
+  default = "FwoGZXIvYXdzENn//////////wEaDDUAAOXQi0CEFLL8qSK0AdNjuMhUs65MXNMFUf23VHuwgI0u7sgmfq+RbsaYhWUE5MBb9KfqR0hMo6MKVhAJ/Tc/mYEJsTWHx+zOSTHCzXSIAoPLM/pxB04k0abAwCXRYWaWRB0/Msi+3t8LTlThwS+fRF7Cs3acsLkLHcKuqNHBVDwcwxbc5ceFkeoYmhghEO2xHCfL7HBIi7LLb3FyxQSAAI7damdduf27ySu8ZMvCdiL86YYd8w9nf5Njg7pc4pngkCisg/GjBjItyFY8UyXhw2BqbTnCrkCRPea+/ggTheGY5joMR2SiJNVn85Qng4ds7Qt+jZWu"
 }
-variable "region" {
-    default = "us-east-1"
+
+variable "aws_region" {
+  default = "us-east-1"
 }
 
 variable "ssh_user" {
@@ -25,9 +31,9 @@ variable "ssh_user" {
 }
 
 variable "subnet_id" {
-  default = "subnet-07daeb670893d183d"
+  default = "subnet-045ed6305ed131235"
 }
 
 variable "igw_id" {
-  default = "igw-0687d23deabeddf5b"
+  default = "igw-0c23c43f25dcccd8c"
 }
