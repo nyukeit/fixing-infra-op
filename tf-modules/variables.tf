@@ -26,12 +26,24 @@ variable "region" {
   default = "us-east-1"
 }
 
+variable "region_2" {
+  default = "us-east-2"
+}
+
 variable "ssh_user" {
   default = "ubuntu"
 }
 
-variable "subnet_id" {
-  default = "subnet-045ed6305ed131235"
+variable "subnet_id_1" {
+  default = "subnet-0dbbe5280c7146547"
+}
+
+variable "subnet_id_2" {
+  default = "subnet-0ba91d2ba87da6c7f"
+}
+
+variable "subnet_id_3" {
+  default = "subnet-070c49941cb44596f"
 }
 
 variable "igw_id" {

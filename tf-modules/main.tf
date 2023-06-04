@@ -1,3 +1,19 @@
+terraform{
+required_version = ">= 1.0"
+      required_providers {
+        aws = {
+          source = "hashicorp/aws"
+        }
+      }
+}
+
+provider "aws" {
+        region     = "${var.region}"
+        access_key = "${var.aws_access_key}"
+        secret_key = "${var.aws_secret_key}"
+        token = "${var.aws_token}"
+}
+
 # Define Local Variables
 locals {
   private_key_path = "${var.key_name}.pem"
@@ -117,8 +133,9 @@ resource "aws_instance" "infra-op-ec2" {
 resource "aws_lb" "infra_op_lb" {
   name = "infra-op-lb"
   internal = false
-  security_groups = "${aws_security_group.infra-op-sg.id}"
+  security_groups = [aws_security_group.infra-op-sg.id]
   load_balancer_type = "application"
+  subnets = ["${var.subnet_id_1}", "${var.subnet_id_2}", "${var.subnet_id_3}"]
 }
 
 # Installing Docker & Kubernetes on our Instances
@@ -153,22 +170,22 @@ resource "null_resource" "install_apps" {
   }
 }
 
-resource "null_resource" "setup_master" {
-  depends_on = [
-    null_resource.install_apps,
-  ]
+#resource "null_resource" "setup_master" {
+#  depends_on = [
+#    null_resource.install_apps,
+#  ]
   
-  provisioner "local-exec" {
-    command = "ansible-playbook -i hosts ~/fixing-infra-op/playbooks/master.yaml --private-key=~/fixing-infra-op/tf-modules/infra_op.pem"
-  }
-}
+#  provisioner "local-exec" {
+#    command = "ansible-playbook -i hosts ~/fixing-infra-op/playbooks/master.yaml --private-key=~/fixing-infra-op/tf-modules/infra_op.pem"
+#  }
+#}
 
-resource "null_resource" "setup_workers" {
-  depends_on = [
-    null_resource.setup_master,
-  ]
+#resource "null_resource" "setup_workers" {
+#  depends_on = [
+#    null_resource.setup_master,
+#  ]
   
-  provisioner "local-exec" {
-    command = "ansible-playbook -i hosts ~/fixing-infra-op/playbooks/workers.yaml --private-key=~/fixing-infra-op/tf-modules/infra_op.pem"
-  }
-}
+#  provisioner "local-exec" {
+#    command = "ansible-playbook -i hosts ~/fixing-infra-op/playbooks/workers.yaml --private-key=~/fixing-infra-op/tf-modules/infra_op.pem"
+#  }
+#}
