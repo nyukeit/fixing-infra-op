@@ -24,7 +24,7 @@
         path: /etc/fstab
         regexp: '^([^#].*?\sswap\s+sw\s+.*)$'
         replace: '# \1'
-        
+
     - name: Download Docker install script
       ansible.builtin.get_url:
         url: https://raw.githubusercontent.com/nyukeit/fixing-infra-op/main/install/installDocker.sh
@@ -34,7 +34,21 @@
     - name: Install Docker from script
       become: yes
       ansible.builtin.shell: bash /tmp/installDocker.sh
-      
+
+    - name: Change cgroup to systemd
+      become: yes
+      copy:
+        dest: /etc/docker/daemon.json
+        content: |
+          {
+            "exec-opts": ["native.cgroupdriver=systemd"]
+          }
+
+    - name: Daemon Reload
+      become: yes
+      ansible.builtin.systemd:
+        daemon_reload: true
+  
     - name: Restart Docker service
       become: yes
       ansible.builtin.systemd:
@@ -63,3 +77,8 @@
         
     - name: Install kubeadm, kubelet and kubectl
       ansible.builtin.shell: bash /tmp/installK8S.sh
+
+    - name: enable the Kubelet service, and enable it persistently
+      service:
+        name: kubelet
+        enabled: yes
