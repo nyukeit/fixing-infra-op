@@ -22,7 +22,7 @@ variable "aws_token" {
   default = "FwoGZXIvYXdzENn//////////wEaDDUAAOXQi0CEFLL8qSK0AdNjuMhUs65MXNMFUf23VHuwgI0u7sgmfq+RbsaYhWUE5MBb9KfqR0hMo6MKVhAJ/Tc/mYEJsTWHx+zOSTHCzXSIAoPLM/pxB04k0abAwCXRYWaWRB0/Msi+3t8LTlThwS+fRF7Cs3acsLkLHcKuqNHBVDwcwxbc5ceFkeoYmhghEO2xHCfL7HBIi7LLb3FyxQSAAI7damdduf27ySu8ZMvCdiL86YYd8w9nf5Njg7pc4pngkCisg/GjBjItyFY8UyXhw2BqbTnCrkCRPea+/ggTheGY5joMR2SiJNVn85Qng4ds7Qt+jZWu"
 }
 
-variable "aws_region" {
+variable "region" {
   default = "us-east-1"
 }
 

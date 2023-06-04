@@ -1,6 +1,6 @@
 # Define Local Variables
 locals {
-  private_key_path = "${path.module}/${var.key_name}.pem"
+  private_key_path = "${var.key_name}.pem"
 }
 
 # Network Policy for our VPC using Security Group
@@ -97,13 +97,20 @@ resource "aws_instance" "infra-op-ec2" {
   associate_public_ip_address = true
   vpc_security_group_ids = [aws_security_group.infra-op-sg.id]
   key_name = "${var.key_name}"
+  subnet_id = "${var.subnet_id}"
 
   connection {
     type = "ssh"
-    host = "${aws_instance.infra-op-ec2[*].public_ip}"
+    host = self.public_ip
     user = "${var.ssh_user}"
     private_key = "${file(local.private_key_path)}"
     timeout = "4m"
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "touch /home/ubuntu/demo-file-from-terraform.txt"
+    ]
   }
 }
 
@@ -137,7 +144,7 @@ resource "local_file" "hosts" {
 
     [all:vars]
     ansible_user="${var.ssh_user}"
-    ansible_ssh_private_key_path="${local.private_key_path}"
+    ansible_ssh_private_key_path="/tf-modules/${local.private_key_path}"
     ansible_ssh_common_args="-o StrictHostKeyChecking=no"
     DOC
   filename = "${path.module}/hosts"
@@ -150,16 +157,8 @@ resource "null_resource" "install_apps" {
     local_file.hosts,
   ]
 
-  connection {
-    type = "ssh"
-    host = "${aws_instance.infra-op-ec2[*].public_ip}"
-    user = "${var.ssh_user}"
-    private_key = "${file(local.private_key_path)}"
-    timeout = "4m"
-  }
-  
   provisioner "local-exec" {
-    command = "ansible-playbook -i hosts ~/fixing-infra-op/playbooks/kube-deps.yaml"
+    command = "ansible-playbook -i hosts ~/fixing-infra-op/playbooks/kube-deps.yaml --private-key=~/fixing-infra-op/tf-modules/infra_op.pem"
   }
 }
 
@@ -169,7 +168,7 @@ resource "null_resource" "setup_master" {
   ]
   
   provisioner "local-exec" {
-    command = "ansible-playbook -i hosts ~/fixing-infra-op/playbooks/master.yaml"
+    command = "ansible-playbook -i hosts ~/fixing-infra-op/playbooks/master.yaml --private-key=~/fixing-infra-op/tf-modules/infra_op.pem"
   }
 }
 
@@ -179,6 +178,6 @@ resource "null_resource" "setup_workers" {
   ]
   
   provisioner "local-exec" {
-    command = "ansible-playbook -i hosts ~/fixing-infra-op/playbooks/workers.yaml"
+    command = "ansible-playbook -i hosts ~/fixing-infra-op/playbooks/workers.yaml --private-key=~/fixing-infra-op/tf-modules/infra_op.pem"
   }
 }
