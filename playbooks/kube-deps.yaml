@@ -78,6 +78,17 @@
     - name: Install kubeadm, kubelet and kubectl
       ansible.builtin.shell: bash /tmp/installK8S.sh
 
+    - name: check Kubelet args in Kubelet config
+      shell: grep "^Environment=\"KUBELET_EXTRA_ARGS=" /etc/systemd/system/kubelet.service.d/10-kubeadm.conf || true
+      register: check_args
+
+    - name: add runtime args in Kubelet config
+      lineinfile:
+        dest: "/etc/systemd/system/kubelet.service.d/10-kubeadm.conf"
+        line: "Environment="KUBELET_KUBECONFIG_ARGS=--bootstrap-kubeconfig=/etc/kubernetes/bootstrap-kubelet.conf --kubeconfig=/etc/kubernetes/kubelet.conf --cgroup-driver=cgroupfs""
+        insertafter: '\[Service\]'
+      when: check_args.stdout == ""
+
     - name: enable the Kubelet service, and enable it persistently
       service:
         name: kubelet
