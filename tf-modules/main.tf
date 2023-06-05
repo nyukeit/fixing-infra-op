@@ -20,7 +20,7 @@ locals {
 }
 
 resource "aws_vpc" "infra-op-vpc" {
-  cidr_block = "10.0.0.0/16"
+  cidr_block = "10.0.2.0/24"
 
   tags = {
     Name = "Infra OP VPC"
@@ -29,7 +29,7 @@ resource "aws_vpc" "infra-op-vpc" {
 
 resource "aws_subnet" "infra-op-subnet" {
   vpc_id = aws_vpc.infra-op-vpc.id
-  cidr_block = "10.0.0.0/16"
+  cidr_block = "${cidrsubnet(aws_vpc.infra-op-vpc.cidr_block, 4, 8)}"
 
   tags = {
     Name = "Infra OP Subnet"
@@ -148,23 +148,22 @@ resource "aws_instance" "infra-op-ec2" {
   key_name = "${var.key_name}"
   subnet_id = aws_subnet.infra-op-subnet.id
 
-  connection {
-    type = "ssh"
-    host = self.public_ip
-    user = "${var.ssh_user}"
-    private_key = "${file(local.private_key_path)}"
-    timeout = "10m"
-  }
+#  connection {
+#    type = "ssh"
+#    host = self.public_ip
+#    user = "${var.ssh_user}"
+#    private_key = "${file(local.private_key_path)}"
+#    timeout = "10m"
+#  }
 
-  provisioner "remote-exec" {
-    inline = [
-      "touch /home/ubuntu/demo-file-from-terraform.txt"
-    ]
-  }
+#  provisioner "remote-exec" {
+#    inline = [
+#      "touch /home/ubuntu/demo-file-from-terraform.txt"
+#    ]
+#  }
 }
 
 # Provision a Networking Load Balancer
-
 resource "aws_lb_target_group" "infra-op-tg" {
   name = "Infra-op-tg"
   port = 6443
@@ -177,6 +176,13 @@ resource "aws_lb_target_group_attachment" "infra-op-tga" {
   target_group_arn = aws_lb_target_group.infra-op-tg.arn
   target_id        = aws_instance.infra-op-ec2[count.index].id
   port             = 6443
+}
+
+# Provision the Elastic IP
+resource "aws_eip" "infra-op-eip" {
+  domain = "vpc"
+
+  depends_on = [aws_internet_gateway.infra-op-igw]  
 }
 
 resource "aws_lb" "infra-op-nlb" {
