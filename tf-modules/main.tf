@@ -29,7 +29,7 @@ resource "aws_vpc" "infra-op-vpc" {
 
 resource "aws_subnet" "infra-op-subnet" {
   vpc_id = aws_vpc.infra-op-vpc.id
-  cidr_block = "10.0.1.0/16"
+  cidr_block = "10.0.0.0/16"
 
   tags = {
     Name = "Infra OP Subnet"
@@ -59,7 +59,7 @@ resource "aws_route_table" "infra-op-rt" {
 
 resource "aws_security_group" "infra-op-sg" {
   name = "infra-op-sg"
-  vpc_id = "${var.vpc_id}"
+  vpc_id = aws_vpc.infra-op-vpc.id
   
   ingress {
     from_port = 80
@@ -146,6 +146,7 @@ resource "aws_instance" "infra-op-ec2" {
   associate_public_ip_address = true
   vpc_security_group_ids = [aws_security_group.infra-op-sg.id]
   key_name = "${var.key_name}"
+  subnet_id = aws_subnet.infra-op-subnet.id
 
   connection {
     type = "ssh"
@@ -165,29 +166,28 @@ resource "aws_instance" "infra-op-ec2" {
 # Provision a Networking Load Balancer
 
 resource "aws_lb_target_group" "infra-op-tg" {
-  name = "Infra OP TG"
+  name = "Infra-op-tg"
   port = 6443
   protocol = "TCP"
   vpc_id = aws_vpc.infra-op-vpc.id
 }
 
 resource "aws_lb_target_group_attachment" "infra-op-tga" {
-  target_group_arn = aws_lb_target_group.tg.arn
-  target_id        = (aws_instance.infra-op-ec2[*].id)
+  count = length(aws_instance.infra-op-ec2)
+  target_group_arn = aws_lb_target_group.infra-op-tg.arn
+  target_id        = aws_instance.infra-op-ec2[count.index].id
   port             = 6443
 }
 
 resource "aws_lb" "infra-op-nlb" {
-  name = "Infra OP NLB"
+  name = "Infra-OP-NLB"
   internal = false
   load_balancer_type = "network"
-  subnets = [for subnet in aws_subnet.infra-op-subnet : subnet.id]
-
-  enable_deletion_protection = true
+  subnets = [aws_subnet.infra-op-subnet.id]
 }
 
 resource "aws_lb_listener" "infra-op-listener" {
-  load_balancer_arn = aws_lb.infra-op-lb.arn
+  load_balancer_arn = aws_lb.infra-op-nlb.arn
   port              = "6443"
   protocol          = "TCP"
  
@@ -220,7 +220,7 @@ resource "local_file" "hosts" {
 # Using Local Exec to install apps on our instance using Local Ansible
 resource "null_resource" "install_apps" {
   depends_on = [
-    aws_instance.infra-op-ec2[*],
+    aws_instance.infra-op-ec2,
     local_file.hosts,
   ]
 
