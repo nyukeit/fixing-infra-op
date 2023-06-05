@@ -153,7 +153,7 @@ resource "aws_instance" "infra-op-ec2" {
     host = self.public_ip
     user = "${var.ssh_user}"
     private_key = "${file(local.private_key_path)}"
-    timeout = "4m"
+    timeout = "10m"
   }
 
   provisioner "remote-exec" {

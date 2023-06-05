@@ -1,5 +1,5 @@
 variable "ami_id" {
-  default = "ami-053b0d53c279acc90" 
+  default = "ami-08fdec01f5df9998f" 
 }
 
 #variable "vpc_id"{
