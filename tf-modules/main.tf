@@ -189,7 +189,12 @@ resource "aws_lb" "infra-op-nlb" {
   name = "Infra-OP-NLB"
   internal = false
   load_balancer_type = "network"
-  subnets = [aws_subnet.infra-op-subnet.id]
+  security_groups = [aws_security_group.infra-op-sg.id]
+
+  subnet_mapping {
+    subnet_id = aws_subnet.infra-op-subnet.id
+    allocation_id = aws_eip.infra-op-eip.id
+  }
 }
 
 resource "aws_lb_listener" "infra-op-listener" {
