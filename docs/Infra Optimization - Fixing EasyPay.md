@@ -294,7 +294,7 @@ resource "null_resource" "install_apps" {
 #}
 ```
 
-We are deploying an Application Load Balancer which will dynamically provision an Elastic IP that will forward traffic to it. We also need to specify at least 2 subnets in 2 different availability zones for the ALB to work.
+Ideally, we do not want to deploy all of the resources initially. We only need the Elastic IP and the Load Balancer to be functional post app deployment. This will also reduce a lot of headache about the initial network setup just to SSH into the instances.
 
 Terraform File Part 2
 
@@ -330,7 +330,7 @@ resource "aws_vpc" "infra-op-vpc" {
 
 resource "aws_subnet" "infra-op-subnet" {
   vpc_id = aws_vpc.infra-op-vpc.id
-  cidr_block = "10.0.1.0/16"
+  cidr_block = "10.0.0.0/16"
 
   tags = {
     Name = "Infra OP Subnet"
@@ -532,3 +532,11 @@ resource "null_resource" "install_apps" {
 ```
 
 1. We must use the TCP protocol for a listener that forwards traffic to a Network Load Balancer. (For the ALB, HTTP or HTTPS are used.)
+2. Make sure to remove the 'Enable deletion Protection = true' from the Network Load Balancer. If enable, Terraform will not be able to delete it and if you do `terraform destroy` it will most likely fail.
+
+kubeadm join 10.0.0.57:6443 --token szjrte.086aly3lr7hfst50 \
+	--discovery-token-ca-cert-hash sha256:7a641553fdde2c70c86730898eea75442803d5a0c3cb67962dfb32de5f68c4e3 --cri-socket=unix:///var/run/cri-dockerd.sock
+
+```
+kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.24.1/manifests/calico.yaml
+```

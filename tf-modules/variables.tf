@@ -2,24 +2,20 @@ variable "ami_id" {
   default = "ami-08fdec01f5df9998f" 
 }
 
-#variable "vpc_id"{
-#  default= "vpc-0628a7cccdfec986d"
-#}
-
 variable "key_name" {
   default = "infra_op"
 }
 
 variable "aws_access_key" {
-  default = "ASIAZWKLZ6WUVS6EDX4W"
+  default = "ASIAZWKLZ6WUYXVIGKNM"
 }
 
 variable "aws_secret_key" {
-  default = "wdcwpi1BOHxu+q67GZwikIN4NvWvdADuDb9bLBcg"
+  default = "ww3bd71gxJrRb6XVQazH10gk4PKnAdL1a0Ceb+Ue"
 }
 
 variable "aws_token" {
-  default = "FwoGZXIvYXdzEPz//////////wEaDHLI+1Zn1N0j17uomiK0ARcNWYE5itqUDnZWMO7vrbNYxz2gKDXp0vlU4jLq+ejErVEhJJa1tYowZf1UVSpEvK0ViqKe3wgjDAgXOaa6IM8C/7FqJ+wLs0OSb3WnP6jqV/DFHwCXPeoDroY+xpf8YlDElkr0oI3cNoJivBJELMFmbEyK5E2MIZBD5ryVF5vDAb7IacazEJ7ThPAy1a9FhxO74MWsz/AZ2az1S9B01FAh7BnSAK27dC4yOTMdGKMc7XzA7iiVzvijBjItX+p+6IN4HDj9Tz44+MkQPY1C64YyeG26UyvpxmjQET/+IRWrFRGgXiMEt/46"
+  default = "FwoGZXIvYXdzEAkaDAeR+uUNDiSIvH3R0CK0AdTyrgMHL8GhDlMJlJdM3cr1cASfWav3/JF/97C4OWRqSxdFlxzTuOYXCtS6LbhZrIgvb58cOHNVnQT9/ea4VxVeEJfM5MJWb+vjY353Zf5W4dWnIAuppRvJ/XQwZ2yq0Tg4L3rrWYj43vUngtMTJYe8t63aRwX3Aj4m08eLh+U0s4KK6mzaaY9TcdX7GY1zSEudeUYFNqyrvO3xGo8emSeFQn+GnFKVJxXwiXJ4pmzcUXboBCjBv/ujBjItSlhPqklTWzI7fQ4X82iJSMDtp3AhE+m4u9CsGmz2d65Y85dcfGSfkDiHe2oJ"
 }
 
 variable "region" {
