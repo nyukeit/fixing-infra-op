@@ -199,3 +199,26 @@ resource "null_resource" "install_apps" {
     command = "ansible-playbook -i hosts ~/fixing-infra-op/playbooks/kube-deps.yaml --private-key=~/fixing-infra-op/tf-modules/infra_op.pem"
   }
 }
+
+
+# Setting up the Master node
+resource "null_resource" "setup_master" {
+  depends_on = [
+    null_resource.install_apps,
+  ]
+
+  provisioner "local-exec" {
+    command = "ansible-playbook -i hosts ~/fixing-infra-op/playbooks/master.yaml --private-key=~/fixing-infra-op/tf-modules/infra_op.pem"
+  }
+}
+
+# Setting up the worker nodes
+resource "null_resource" "setup_workers" {
+  depends_on = [
+    null_resource.setup_master,
+  ]
+
+  provisioner "local-exec" {
+    command = "ansible-playbook -i hosts ~/fixing-infra-op/playbooks/workers.yaml --private-key=~/fixing-infra-op/tf-modules/infra_op.pem"
+  }
+}
