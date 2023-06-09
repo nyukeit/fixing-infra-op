@@ -1,4 +1,3 @@
-infra_op.pem
 .terraform
 .terraform.lock.hcl
 terraform.tfstate
