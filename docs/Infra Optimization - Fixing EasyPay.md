@@ -38,7 +38,7 @@ The basic idea here is to make our application accessible from the internet usin
 
 ![AWS LB Routing](images/aws-lb-subnets-routing.png)
 
-> Note: This diagram shows the flow of traffic in two different availability zones but for the sake of this project, we will be working within a single availability zone. This is because the output of the project is to Autoscale a cluster **Horizontally**. This is not a best practice for High Availability in production environments.  
+> Note: This diagram shows the flow of traffic in two different availability zones but for the sake of this project, we will be working within a single availability zone. This is because the output of the project is only to Autoscale a cluster **Horizontally**. This is not a best practice for High Availability in production environments.  
 
 #### <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg" style="width:30px" /> Repository  
 
@@ -54,7 +54,7 @@ To keep things extremely simple and straightforward, we will deploy 3 **similar*
 
 ### 1.1 Create Keypair in EC2 Dashboard
 
-First, create a keypair from the AWS EC2 dashboard. While you can create this in Terraform too, they discourage this method and suggest us to create a keypair outside of Terraform. Steps to create this can be followed here.
+First, create a keypair from the AWS EC2 dashboard. While you can create this in Terraform too, they discourage this method and suggest us to create a keypair outside of Terraform. Steps to create this can be followed [here](https://dev.to/nyukeit/provisioning-an-ec2-instance-using-terraform-keypair-1b9k).
 
 Amazon allows us to use a single keypair for multiple EC2 instances.
 
