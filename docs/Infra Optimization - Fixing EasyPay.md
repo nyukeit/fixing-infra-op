@@ -462,6 +462,165 @@ If everything is in order, we should have an output like this
 
 ![Nodes Ready](images/kubectl-nodes-ready.png)
 
+## Step 3 - Creating User
+
+As a demonstration of how we can work with different users for a Kubernetes cluster, we will create a demo user called "user1" and assign the user various abilities to interact with our cluster.
+
+To create and authenticate a user, we need a few things first.
+
+### 3.1 Create User Directory
+
+First, we will create the directory where the new user's credentials will reside
+
+```bash
+mkdir -p $HOME/user1
+```
+
+We will then move in to this folder to generate the credentials
+
+```bash
+cd $HOME/user1
+```
+
+### 3.2 Create Credentials
+
+Inside the `user1` directory, we will create all the necessary credentials to authenticate the user. We need to first comment out a line inside the OpenSSL config file for this to work.
+
+```bash
+sudo nano /etc/ssl/openssl.cnf
+```
+
+Comment out the line
+
+```ini
+RANDFILE = $ENV::HOME/.rnd
+```
+
+#### 3.2.1 Private Key
+
+First, we will create a private key
+
+```bash
+openssl genrsa -out user1.key 2048
+```
+
+#### 3.2.2 Certificate Signing Request
+
+Once we have a private key, we can use to to generate a CSR.
+
+The `CN=user1` is common name and `O=devops` is the organisation.
+
+```bash
+openssl req -new -key user1.key -out user1.csr -subj "/CN=user1/O=devops"
+```
+
+This command does not have an output, so just check if the `user1.csr` file was created correctly.
+
+#### 3.2.3 Generate Certificate
+
+Once we have a certificate signing request, we can go ahead and generate a certificate for our user.
+
+> Note: This command fails when executed without `sudo`.
+
+```bash
+sudo openssl x509 -req -in user1.csr -CA /etc/kubernetes/pki/ca.crt -CAkey /etc/kubernetes/pki/ca.key -CAcreateserial -out user1.crt -days 1000
+```
+
+#### 3.2.4 Generate `kubeconfig` for `user1`
+
+Now that our user is ready with all the authentication required to work with Kubernetes, we need to create a kubeconfig file for the user which will set the context for the user to interact with the correct cluster.
+
+First, we need to find out the context in which we are working and the name of our cluster.
+
+```bash
+kubectl config view
+```
+
+![Cluster Info]()
+
+```bash
+kubectl config --kubeconfig=user1.conf set-cluster kubernetes --server=https://10.0.0.33:6443 --certificate-authority=/etc/kubernetes/pki/ca.crt
+```
+
+Once the cluster is set, we need to set credentials
+
+```bash
+kubectl config --kubeconfig=user1.conf set-credentials user1 --client-certificate=/home/user1/certs/user1.crt --client-key=/home/user1/certs/user1.key
+```
+
+This should give an output like `User "user1" set.`
+
+Once our user is set, we will add the context details
+
+```bash
+kubectl config --kubeconfig=user1.conf set-context kubernetes-admin@kubernetes --cluster=kubernetes --user=user1
+```
+
+The output should be `Context "kubernetes-admin@kubernetes" created.`
+
+Finally, we have to actually use this context.
+
+```bash
+kubectl config --kubeconfig-user1.conf use-context kubernetes-admin@kubernetes
+```
+
+Here, the output will be `Switched to context "kubernetes-admin@kubernetes".`
+
+This means our user is ready to get attached to a Role to allow interaction access.
+
+### 3.3 Role & RoleBinding
+
+Once our User is ready and in-context, we need to assign a Role to user. Implementing the **Principle of Least Privilege** is extremely essential in securing production and enterprise clusters, in other words, assigning roles ensures every user has only the permissions that are necessary for their function.
+
+#### 3.3.1 Role
+
+Our user is allowed to only interact with Pods, but in full capacity. Thus our permissions should include create, list, get, update and delete pods.
+
+We will create this role using a YAML manifest.
+
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: pod-management-clusterrole
+rules:
+- apiGroups: ["*"]
+  resources: ["pods"]
+  verbs: ["get", "list", "delete", "create", "update"]
+```
+
+We need to apply this YAML file to create the role.
+
+```bash
+kubectl create -f podrole.yaml
+```
+
+Now, we will create the RoleBinding which will actually bind our user with this newly created role.
+
+#### 3.3.2 RoleBinding
+
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: podrolebinding
+subjects:
+- kind: User
+  name: user1 # name of your service account
+roleRef: # referring to your Role
+  kind: Role
+  name: podrole
+  apiGroup: rbac.authorization.k8s.io
+```
+
+Once again, we need to apply this file to create the resource.
+
+```bash
+kubectl create -f podrolebinding.yaml
+```
+
+
+
 1. We must use the TCP protocol for a listener that forwards traffic to a Network Load Balancer. (For the ALB, HTTP or HTTPS are used.)
 2. Make sure to remove the 'Enable deletion Protection = true' from the Network Load Balancer. If enable, Terraform will not be able to delete it and if you do `terraform destroy` it will most likely fail.
 
