@@ -4,6 +4,10 @@ Capstone Project for PGP DevOps
 
 By Nyukeit
 
+#### <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg" style="width:30px" /> Repository  
+
+https://github.com/nyukeit/fixing-infra-op
+
 ## Details & Context Statement
 
 A popular payment application, **EasyPay** where users add money to their wallet accounts, faces an issue in its payment success rate. The timeout that occurs with the connectivity of the database has been the reason for the issue. 
@@ -39,10 +43,6 @@ The basic idea here is to make our application accessible from the internet usin
 ![AWS LB Routing](images/aws-lb-subnets-routing.png)
 
 > Note: This diagram shows the flow of traffic in two different availability zones but for the sake of this project, we will be working within a single availability zone. This is because the output of the project is only to Autoscale a cluster **Horizontally**. This is not a best practice for High Availability in production environments.  
-
-#### <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg" style="width:30px" /> Repository  
-
-https://github.com/nyukeit/fixing-infra-op
 
 ## Step 1 - Create AWS Resources (Part 1)
 
@@ -532,32 +532,6 @@ sudo openssl x509 -req -in user1.csr -CA /etc/kubernetes/pki/ca.crt -CAkey /etc/
 
 Now that our user is ready with all the authentication required to work with Kubernetes, we need to create a kubeconfig file for the user which will set the context for the user to interact with the correct cluster.
 
-```yaml
-apiVersion: v1
-clusters:
-- cluster:
-    certificate-authority: /etc/kubernetes/pki/ca.crt
-    server: https://10.0.0.10:6443
-  name: dev-cluster
-- cluster:
-    certificate-authority: /etc/kubernetes/pki/ca.crt
-    server: https://10.0.0.10:6443
-  name: qa-cluster
-contexts:
-- context:
-    cluster: dev-cluster
-    user: user1
-  name: user1@dev-cluster
-current-context: user1@dev-cluster
-kind: Config
-preferences: {}
-users:
-- name: user1
-  user:
-    client-certificate: /home/vagrant/certs/user1.crt
-    client-key: /home/vagrant/certs/user1.key
-```
-
 First, we need to find out the context in which we are working and the name of our cluster.
 
 ```bash
@@ -791,10 +765,6 @@ Since we are considering Pod metrics in this project, let's go ahead and check s
 ```bash
 kubectl top pods
 ```
-
-The output should be similar to this
-
-![Pod Metrics]()
 
 ### 6.2 Horizontal Pod AutoScaler
 
