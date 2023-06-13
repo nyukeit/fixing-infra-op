@@ -553,18 +553,18 @@ This should give an output like `User "user1" set.`
 Once our user is set, we will add the context details
 
 ```bash
-kubectl config --kubeconfig=user1.conf set-context kubernetes-admin@kubernetes --cluster=kubernetes --user=user1
+kubectl config --kubeconfig=user1.conf set-context dev --cluster=kubernetes --user=user1
 ```
 
-The output should be `Context "kubernetes-admin@kubernetes" created.`
+The output should be `Context "dev" created.`
 
 Finally, we have to actually use this context.
 
 ```bash
-kubectl config --kubeconfig-user1.conf use-context kubernetes-admin@kubernetes
+kubectl config --kubeconfig-user1.conf use-context dev
 ```
 
-Here, the output will be `Switched to context "kubernetes-admin@kubernetes".`
+Here, the output will be `Switched to context "dev".`
 
 This means our user is ready to get attached to a Role to allow interaction access.
 
