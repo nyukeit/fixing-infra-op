@@ -530,6 +530,34 @@ sudo openssl x509 -req -in user1.csr -CA /etc/kubernetes/pki/ca.crt -CAkey /etc/
 
 Now that our user is ready with all the authentication required to work with Kubernetes, we need to create a kubeconfig file for the user which will set the context for the user to interact with the correct cluster.
 
+```yaml
+apiVersion: v1
+clusters:
+- cluster:
+    certificate-authority: /etc/kubernetes/pki/ca.crt
+    server: https://10.0.0.10:6443
+  name: dev-cluster
+- cluster:
+    certificate-authority: /etc/kubernetes/pki/ca.crt
+    server: https://10.0.0.10:6443
+  name: qa-cluster
+contexts:
+- context:
+    cluster: dev-cluster
+    user: user1
+  name: user1@dev-cluster
+current-context: user1@dev-cluster
+kind: Config
+preferences: {}
+users:
+- name: user1
+  user:
+    client-certificate: /home/vagrant/certs/user1.crt
+    client-key: /home/vagrant/certs/user1.key
+```
+
+
+
 First, we need to find out the context in which we are working and the name of our cluster.
 
 ```bash
@@ -539,13 +567,13 @@ kubectl config view
 ![Cluster Info]()
 
 ```bash
-kubectl config --kubeconfig=user1.conf set-cluster kubernetes --server=https://10.0.0.33:6443 --certificate-authority=/etc/kubernetes/pki/ca.crt
+kubectl config --kubeconfig=user1.conf set-cluster kubernetes --server=https://10.0.0.105:6443 --certificate-authority=/etc/kubernetes/pki/ca.crt
 ```
 
 Once the cluster is set, we need to set credentials
 
 ```bash
-kubectl config --kubeconfig=user1.conf set-credentials user1 --client-certificate=/home/user1/certs/user1.crt --client-key=/home/user1/certs/user1.key
+kubectl config --kubeconfig=user1.conf set-credentials user1 --client-certificate=$HOME/user1/user1.crt --client-key=$HOME/user1/user1.key
 ```
 
 This should give an output like `User "user1" set.`
@@ -561,7 +589,7 @@ The output should be `Context "dev" created.`
 Finally, we have to actually use this context.
 
 ```bash
-kubectl config --kubeconfig-user1.conf use-context dev
+kubectl config --kubeconfig=user1.conf use-context dev
 ```
 
 Here, the output will be `Switched to context "dev".`
@@ -597,6 +625,8 @@ kubectl create -f podrole.yaml
 
 Now, we will create the RoleBinding which will actually bind our user with this newly created role.
 
+![Pod Role Created]()
+
 #### 3.3.2 RoleBinding
 
 ```yaml
@@ -617,6 +647,50 @@ Once again, we need to apply this file to create the resource.
 
 ```bash
 kubectl create -f podrolebinding.yaml
+```
+
+![Pod RoleBinding Created]()
+
+## Step 4 Docker Application
+
+We will use a simple Hello application from Google to create a deployment in our new cluster.
+
+To create the Deployment, we will write a simple YAML manifest. Create a file named `hello-app.yaml`
+
+```bash
+nano hello-app.yaml
+```
+
+Write the following YAML script inside the file.
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello-app
+spec:
+  replicas: 5      
+  template:
+    metadata:
+      name: hello-app
+    spec:
+      containers:
+        - image: us-docker.pkg.dev/google-samples/containers/gke/hello-app:1.0
+          name: hello-app
+          ports:
+            - containerPort: 8080
+```
+
+Now let's create a Deployment using this file.
+
+```bash
+kubectl create -f hello-app.yaml
+```
+
+Once the deployment is created, we will verify it
+
+```bash
+kubectl get deployment
 ```
 
 

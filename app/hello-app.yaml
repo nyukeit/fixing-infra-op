@@ -1,0 +1,15 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello-app
+spec:
+  replicas: 5      
+  template:
+    metadata:
+      name: hello-app
+    spec:
+      containers:
+        - image: us-docker.pkg.dev/google-samples/containers/gke/hello-app:1.0
+          name: hello-app
+          ports:
+            - containerPort: 8080
