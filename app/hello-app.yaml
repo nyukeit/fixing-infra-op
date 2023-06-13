@@ -3,13 +3,18 @@ kind: Deployment
 metadata:
   name: hello-app
 spec:
-  replicas: 5      
+  replicas: 3
+  selector:
+    matchLabels:
+      app: hello-app
   template:
     metadata:
       name: hello-app
+      labels:
+        app: hello-app
     spec:
       containers:
-        - image: us-docker.pkg.dev/google-samples/containers/gke/hello-app:1.0
-          name: hello-app
-          ports:
-            - containerPort: 8080
+      - image: us-docker.pkg.dev/google-samples/containers/gke/hello-app:1.0
+        name: hello-app
+        ports:
+          - containerPort: 8080

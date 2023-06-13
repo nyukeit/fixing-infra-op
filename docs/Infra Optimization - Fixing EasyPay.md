@@ -504,6 +504,8 @@ First, we will create a private key
 openssl genrsa -out user1.key 2048
 ```
 
+![Creating Private Key](images/create-private-key.png)
+
 #### 3.2.2 Certificate Signing Request
 
 Once we have a private key, we can use to to generate a CSR.
@@ -556,15 +558,13 @@ users:
     client-key: /home/vagrant/certs/user1.key
 ```
 
-
-
 First, we need to find out the context in which we are working and the name of our cluster.
 
 ```bash
 kubectl config view
 ```
 
-![Cluster Info]()
+![Cluster Info](images/kubectl-config-view.png)
 
 ```bash
 kubectl config --kubeconfig=user1.conf set-cluster kubernetes --server=https://10.0.0.105:6443 --certificate-authority=/etc/kubernetes/pki/ca.crt
@@ -625,7 +625,7 @@ kubectl create -f podrole.yaml
 
 Now, we will create the RoleBinding which will actually bind our user with this newly created role.
 
-![Pod Role Created]()
+![Pod Role Created](images/pod-role-created.png)
 
 #### 3.3.2 RoleBinding
 
@@ -649,9 +649,15 @@ Once again, we need to apply this file to create the resource.
 kubectl create -f podrolebinding.yaml
 ```
 
-![Pod RoleBinding Created]()
+![Pod RoleBinding Created](images/pod-rolebinding-created.png)
 
-## Step 4 Docker Application
+-------------------------
+
+>  NOTE: The remaining part of the project has been completed on a GKE cluster because the t2/t3.micro (WE ARE ONLY ALLOWED THESE TWO TYPES IN THE LAB) cluster on AWS is unable to handle the workloads and keeps on failing. The ideas will remain the same regardless of the Cloud provider when you provision a 3 VM self-managed cluster.
+
+----------------------------------------
+
+## Step 4 Configure Application
 
 We will use a simple Hello application from Google to create a deployment in our new cluster.
 
@@ -669,16 +675,25 @@ kind: Deployment
 metadata:
   name: hello-app
 spec:
-  replicas: 5      
+  replicas: 3
+  selector:
+    matchLabels:
+      app: hello-app
   template:
     metadata:
       name: hello-app
+      labels:
+        app: hello-app
     spec:
       containers:
-        - image: us-docker.pkg.dev/google-samples/containers/gke/hello-app:1.0
-          name: hello-app
-          ports:
-            - containerPort: 8080
+      - image: us-docker.pkg.dev/google-samples/containers/gke/hello-app:1.0
+        name: hello-app
+        ports:
+          - containerPort: 8080
+        resources:
+            limits:
+              cpu: "1m"
+              memory: "1Mi"
 ```
 
 Now let's create a Deployment using this file.
@@ -687,16 +702,196 @@ Now let's create a Deployment using this file.
 kubectl create -f hello-app.yaml
 ```
 
-Once the deployment is created, we will verify it
+Once the deployment is created, we will verify it.
 
 ```bash
 kubectl get deployment
 ```
 
+![Deployment Ready](images/deployment-ready.png)
 
+## Step 5 - ETCD Snapshot
 
-1. We must use the TCP protocol for a listener that forwards traffic to a Network Load Balancer. (For the ALB, HTTP or HTTPS are used.)
-2. Make sure to remove the 'Enable deletion Protection = true' from the Network Load Balancer. If enable, Terraform will not be able to delete it and if you do `terraform destroy` it will most likely fail.
+ETCD is designed to tolerate failing VMs and automatically recovers from temporary failures. It can also withstand (N-1)/2 permanent failures. But any more failures than this is considered as a disastrous failure. In order to recover from such failures, it is a good practice to keep the ETCD backed-up.
 
+### 5.1 Download & Install `etcdctl`
 
+To take snapshots, we need `etcdctl` installed.
 
+Check the latest version [here](https://github.com/etcd-io/etcd).
+
+First, let's export the version to our environment.
+
+```bash
+export RELEASE="3.5.9"
+```
+
+Next, we download the executable with the saved version
+
+```bash
+wget https://github.com/etcd-io/etcd/releases/download/v${RELEASE}/etcd-v${RELEASE}-linux-amd64.tar.gz
+```
+
+We have to decompress the downloaded file and extract the contents.
+
+```bash
+tar xvf etcd-v${RELEASE}-linux-amd64.tar.gz
+```
+
+Finally, we move into the newly extracted folder and move the executable file to the local binary directory.
+
+```bash
+cd etcd-v${RELEASE}-linux-amd64
+```
+
+```bash
+sudo mv etcdctl /usr/local/bin
+```
+
+Verify the installation
+
+```bash
+etcdctl version
+```
+
+![ETCD Installed](images/etcdctl-version.png)
+
+### 5.2 Take a Snapshot
+
+To take the snapshot of the ETCD, we need to know the internal endpoint of the cluster. In case you are on a local cluster, this could be your VM IP. If you are using GKE, you can find this information by going into the details of the cluster.
+
+We want to save the snapshot at `/tmp/myback`
+
+```bash
+sudo ETCDCTL_API=3 etcdctl --endpoints=10.128.0.2:2379 --cacert /etc/kubernetes/pki/etcd/ca.crt --cert /etc/kubernetes/pki/etcd/server.crt --key /etc/kubernetes/pki/etcd/server.key snapshot save /tmp/myback
+```
+
+Ideally, you would want to set up a CronJob to create frequent backups of the cluster.
+
+## Step 6 - Auto Scaling
+
+With Horizontal Pod AutoScaling, the idea is to increase the number of pods based on CPU utilisation. To balance the workload, if the CPU utilisation of the deployment goes above 50%, it will add another pod to reduce the load.
+
+### 6.1 Metrics Server
+
+In order for this to work, we first need the Kubernetes Metrics server to be installed. The metrics server will help Kubernetes collect performance and utilisation data in real time and thus make the decisions for autoscaling.
+
+To install the metrics server
+
+```bash
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+```
+
+Once the metrics server is installed, you can verify it by checking a few metrics.
+
+> Note: It may take a few minutes for the metrics to be live and available.
+
+Since we are considering Pod metrics in this project, let's go ahead and check some pod metrics.
+
+```bash
+kubectl top pods
+```
+
+The output should be similar to this
+
+![Pod Metrics]()
+
+### 6.2 Horizontal Pod AutoScaler
+
+Once we have the metrics collection set up and working, we will deploy the HPA or Horizontal Pod AutoScaler. This K8s resource will be responsible for scaling the pods up or down based on resource utilisation.
+
+Create a YAML file called `hello-hpa.yaml` and use the following code
+
+```yaml
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: hpa-busybox
+spec:
+  maxReplicas: 5
+  minReplicas: 1
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: hello-app
+  metrics:
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 50
+```
+
+Here, the minReplicas is the number of replicas of the deployment that are available regardless of the utilisation and the maxReplicas is the number of replicas that the HPA can create.
+
+## Step 7 - Deploy a Load Balancer
+
+Finally, once we have everything in place, we will deploy a Load Balancer to forward traffic to our cluster. Once the cluster starts receiving more and more traffic, the workload on the containers will keep on increasing leading to the HPA to spring into action and create more replicas to handle the load.
+
+There are a few ways to deploy a Load Balancer, but we will use the Kubernetes built-in LoadBalancer resource, that works with the Cloud Controller Manager.
+
+> Note: Future versions of Kubernetes will deprecate the Cloud Controller Manager in favor of individual Cloud provider managed modules.
+
+Once again, we will write a YAML file. Create a file named `hello-lb.yaml`.
+
+```yaml
+kind: Service
+apiVersion: v1
+metadata:
+  name: hello-lb
+spec:
+  type: LoadBalancer
+  selector:
+    app: hello-app
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+```
+
+Now, we create the Load Balancer service.
+
+```bash
+kubectl create -f hello-lb.yaml
+```
+
+If the creation was successful, it should display a message like `service/hello-lb created`. To verify our new LB, we will use this command
+
+```bash
+kubectl get svc
+```
+
+As you will see, the External-IP might still be in a pending state. This is because the Cloud provider will actually provision a Public IP for this Load Balancer. This is managed by the Cloud Controller Manager we discussed of earlier.
+
+![LB External IP Pending](images/lb-ip-pending.png)
+
+Check again in a few minutes and you should see an External IP assigned to the Load Balancer.
+
+![LB IP Assigned](images/lb-ip-provisioned.png)
+
+If you check on your cloud provider, the Load Balancer will be provisioned as well.
+
+## Step 8 - App Deployed
+
+Check the IP address of the Load Balancer. Type this address in your browser to check the app deployment.
+
+![App Deployed](images/app-deployed.png)
+
+Now with the limits, the Horizontal Pod AutoScaler should be at work increasing the number of pods. Let's see this in action.
+
+This is when the HPA is starting to kick-in. As we can see, currently there are only 3 active pods. The Replicas count is 0. Two of our containers are reaching their capped CPU limit. 
+
+![HPA Kicking In](images/hpa-kicking-in.png)
+
+The HPA is creating additional pods here.
+
+![HPA Creating Containers](images/hpa-creating-containers.png)
+
+As we can see from the screenshot below, two of our containers reached our set resource limit of 1m CPU, which is why the HPA started created more pods.
+
+![CPU Utilisation Limits](images/cpu-utilisation-limits.png)
+
+And finally, we can see that the HPA created 5 pods, as requested by us in the YAML file.
+
+![HPA Max Replicas](images/hpa-max-replicas-reached.png)

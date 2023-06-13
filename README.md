@@ -1,6 +1,6 @@
 # Infrastructure Optimization
 
-
+Detailed project report -> [Click Here](/docs/Infra Optimization - Fixing EasyPay.md)
 
 ## Steps
 

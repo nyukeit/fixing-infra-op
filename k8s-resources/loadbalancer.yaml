@@ -1,0 +1,12 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: hello-lb
+spec:
+  type: LoadBalancer
+  selector:
+    app: hello-app
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
