@@ -1,6 +1,6 @@
 # Infrastructure Optimization
 
-Detailed project report -> [Click Here](/docs/Infra Optimization - Fixing EasyPay.md)
+Detailed project report -> [Click Here](https://github.com/nyukeit/fixing-infra-op/blob/main/docs/Infra%20Optimization%20-%20Fixing%20EasyPay.md)
 
 ## Steps
 
