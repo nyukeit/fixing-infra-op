@@ -1,13 +1,5 @@
 # Infra Optimization - Fixing EasyPay
 
-Capstone Project for PGP DevOps
-
-By Nyukeit
-
-#### <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg" style="width:30px" /> Repository  
-
-https://github.com/nyukeit/fixing-infra-op
-
 ## Details & Context Statement
 
 A popular payment application, **EasyPay** where users add money to their wallet accounts, faces an issue in its payment success rate. The timeout that occurs with the connectivity of the database has been the reason for the issue. 
