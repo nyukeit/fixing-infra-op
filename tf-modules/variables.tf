@@ -7,15 +7,15 @@ variable "key_name" {
 }
 
 variable "aws_access_key" {
-  default = "ASIAZWKLZ6WU3F7HIMFD"
+  default = "ASIAZWKLZ6WUUZB67IZS"
 }
 
 variable "aws_secret_key" {
-  default = "A5+i6nFdHC9r/M4rdJPAWTgq46ERnzlOwlQc5GRs"
+  default = "ATxAUHkrfPa5emw7n7usTCwqwZ8uQMM47sAU5HcA"
 }
 
 variable "aws_token" {
-  default = "FwoGZXIvYXdzELL//////////wEaDOLInf9Nhxggk8NjTSK0AUZrobqV5hb+u98HVocPlgEIPYZ37MSpYvRCC7Gs4WweHswS3VWlGpo+4JolqJtOPdWz1zhMOorReRr7LnoEQqMOQ3/0P5pfNXPNpxQ249jAh0Rw5TCEvPa/KYtNAJpCaJqTSdP/Dn82Bt0o9sUC28qreX3MoZyy4LLbj+oGvtDC9PfOQi6QbnyZ7hSX+A3H4ZDWvWTckfjDMFlwBaqkvNeviKnnVbSvthlTTBlYYWHVpJO1wSjM0aCkBjItPv914JyZdHVZWEgtZjuFuJqYUohkfAq6j0GDo142PpYYXYPMtTfze/fHs93g"
+  default = "FwoGZXIvYXdzEOH//////////wEaDJcyiSDkphgJf495ziK0AdSUv3L7z0wlrDB+lhpA+vuozk/wNyzzvpZn0Alj7uxNs4Qz5SQYz7zQ5v08BZVbNX5tLW8stgTfcyQEApzswjI/I2UTSOKqjpBeZJ4udNsHCp5fZKAkJ9C+gO8+asmkiR0j4tD2+s5nOzQNJY4qhBkrKaPHprwoHZyu1PFWOlfe0hCHL1V/nmpJXs1V6a9tU3zPSdQKKxekxJ8cBqokJSTssi+1elg+EjRC2T88Q4Wbe40/eSjtiqukBjItr+Y0oAArgG2pSivcoxQzkbOs8klgCNmpGMuNmX6BcIt3B7MtzfPpk8e/EO+f"
 }
 
 variable "region" {
